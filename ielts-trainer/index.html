@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>IELTS Training Lab</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <div class="eyebrow">B1 → B2 → IELTS</div>
+      <h1>IELTS Training Lab</h1>
+    </div>
+    <div class="auth-area">
+      <span id="syncStatus" class="pill">本地模式</span>
+      <button id="authBtn" class="ghost">登录 / 云同步</button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="hero card">
+      <div>
+        <p class="muted">今日目标</p>
+        <h2>阅读 35 分钟 · 听力 30 分钟 · 词汇复习 15 分钟</h2>
+        <p class="muted">先把 B1 做稳，再逐渐加入 B2 和 IELTS 真题训练。</p>
+      </div>
+      <div class="hero-stat">
+        <strong id="streak">0</strong>
+        <span>连续学习天数</span>
+      </div>
+    </section>
+
+    <section class="stats-grid">
+      <article class="card stat"><span>本周训练</span><strong id="weekSessions">0</strong><small>次</small></article>
+      <article class="card stat"><span>总学习时长</span><strong id="totalMinutes">0</strong><small>分钟</small></article>
+      <article class="card stat"><span>阅读正确率</span><strong id="readingAccuracy">—</strong><small></small></article>
+      <article class="card stat"><span>听力正确率</span><strong id="listeningAccuracy">—</strong><small></small></article>
+    </section>
+
+    <section class="grid-2">
+      <article class="card trainer">
+        <div class="section-title">
+          <div><div class="eyebrow">Reading</div><h3>阅读训练</h3></div>
+          <span class="level-badge">B1</span>
+        </div>
+        <label>训练材料 / 话题<input id="readingTopic" placeholder="例如：Technology and education" /></label>
+        <div class="timer" data-kind="reading">
+          <span id="readingTimer">35:00</span>
+          <div class="timer-actions">
+            <button class="primary startTimer" data-kind="reading">开始</button>
+            <button class="ghost resetTimer" data-kind="reading">重置</button>
+          </div>
+        </div>
+        <div class="score-row">
+          <label>答对<input id="readingCorrect" type="number" min="0" value="0" /></label>
+          <label>总题数<input id="readingTotal" type="number" min="0" value="0" /></label>
+        </div>
+        <label>卡住的词 / 长难句 / 错题<textarea id="readingNotes" rows="4" placeholder="不要只记答案，写下为什么错。"></textarea></label>
+        <button class="primary wide saveSession" data-kind="reading">保存阅读训练</button>
+      </article>
+
+      <article class="card trainer">
+        <div class="section-title">
+          <div><div class="eyebrow">Listening</div><h3>听力训练</h3></div>
+          <span class="level-badge">B1</span>
+        </div>
+        <label>训练材料 / 话题<input id="listeningTopic" placeholder="例如：Travel arrangements" /></label>
+        <div class="timer" data-kind="listening">
+          <span id="listeningTimer">30:00</span>
+          <div class="timer-actions">
+            <button class="primary startTimer" data-kind="listening">开始</button>
+            <button class="ghost resetTimer" data-kind="listening">重置</button>
+          </div>
+        </div>
+        <div class="score-row">
+          <label>答对<input id="listeningCorrect" type="number" min="0" value="0" /></label>
+          <label>总题数<input id="listeningTotal" type="number" min="0" value="0" /></label>
+        </div>
+        <label>没听出来的词 / 连读 / 错题<textarea id="listeningNotes" rows="4" placeholder="重点记：看得懂但听不出来的词。"></textarea></label>
+        <button class="primary wide saveSession" data-kind="listening">保存听力训练</button>
+      </article>
+    </section>
+
+    <section class="grid-2">
+      <article class="card">
+        <div class="section-title"><div><div class="eyebrow">Plan</div><h3>8 周路线</h3></div></div>
+        <ol class="roadmap">
+          <li><b>第 1–2 周：</b>B1 阅读 + B1 听力，精读精听为主。</li>
+          <li><b>第 3–4 周：</b>每 3 次 B1 插入 1 次 B2。</li>
+          <li><b>第 5–6 周：</b>B1/B2 混合，开始限时阅读和连续听。</li>
+          <li><b>第 7–8 周：</b>加入 IELTS 阅读/听力真题，记录题型弱点。</li>
+        </ol>
+      </article>
+
+      <article class="card">
+        <div class="section-title"><div><div class="eyebrow">Vocabulary</div><h3>词汇复习</h3></div></div>
+        <div class="vocab-row">
+          <input id="vocabMinutes" type="number" min="0" value="15" />
+          <span>分钟</span>
+          <button id="saveVocab" class="primary">记录</button>
+        </div>
+        <p class="muted">主任务已经从“背新词”切换到“在阅读和听力中认出词”。</p>
+      </article>
+    </section>
+
+    <section class="card">
+      <div class="section-title">
+        <div><div class="eyebrow">History</div><h3>训练记录</h3></div>
+        <button id="exportBtn" class="ghost">导出 JSON</button>
+      </div>
+      <div id="history" class="history"></div>
+    </section>
+  </main>
+
+  <dialog id="authDialog">
+    <form method="dialog" class="dialog-card" id="authForm">
+      <div class="section-title"><h3>云同步</h3><button class="icon" value="cancel">✕</button></div>
+      <p class="muted">配置 Supabase 后，用同一账号登录即可跨设备同步。</p>
+      <label>邮箱<input id="email" type="email" autocomplete="email" placeholder="you@example.com" /></label>
+      <label>密码<input id="password" type="password" autocomplete="current-password" minlength="6" placeholder="至少 6 位" /></label>
+      <div class="dialog-actions">
+        <button type="button" id="loginBtn" class="primary">登录</button>
+        <button type="button" id="signupBtn" class="ghost">注册</button>
+      </div>
+      <p id="authMessage" class="muted"></p>
+    </form>
+  </dialog>
+
+  <script src="./config.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
